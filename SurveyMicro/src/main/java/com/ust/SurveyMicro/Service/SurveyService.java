@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -24,28 +25,32 @@ public class SurveyService {
     @Autowired
     private AssessmentClient assessmentClient;
 
-
     // Method to get a survey by its ID
     public SurveyDTO getSurveyById(String surveyId) {
-        Optional<Survey> survey = surveyRepository.findById(surveyId);
-        ResponseEntity<Assessment> qs = assessmentClient.getAssessmentBySetName(survey.get().getSetName());
-        if (qs.getStatusCode() == HttpStatus.OK) {
-            Assessment assessment = qs.getBody();
+        // Retrieve survey from the repository
+        Survey survey = surveyRepository.findById(surveyId)
+                .orElseThrow(() -> new NoSuchElementException("Survey not found with ID: " + surveyId));
+
+        // Retrieve the assessment details using Feign client
+        ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
+        if (response.getStatusCode() == HttpStatus.OK) {
+            Assessment assessment = response.getBody();
             List<Question> questions = assessment.getQuestions();
-            System.out.println(questions);
+
+            // Create and return SurveyDTO
             SurveyDTO surveyDTO = new SurveyDTO();
             surveyDTO.setQuestions(questions);
             surveyDTO.setSurveyId(surveyId);
-            surveyDTO.setCompanyName(survey.get().getCompanyName());
-            surveyDTO.setStatus(survey.get().getStatus());
-            surveyDTO.setEmail(survey.get().getEmail());
-            surveyDTO.setDomainName(survey.get().getDomainName());
-            surveyDTO.setSetName(survey.get().getSetName());
+            surveyDTO.setCompanyName(survey.getCompanyName());
+            surveyDTO.setStatus(survey.getStatus());
+            surveyDTO.setEmail(survey.getEmail());
+            surveyDTO.setDomainName(survey.getDomainName());
+            surveyDTO.setSetName(survey.getSetName());
+
             return surveyDTO;
-
+        } else {
+            throw new NoSuchElementException("Assessment not found for set name: " + survey.getSetName());
         }
-        return null;
-
     }
 
     // Method to get all surveys
@@ -54,43 +59,63 @@ public class SurveyService {
         List<SurveyDTO> surveyDTOs = new ArrayList<>();
 
         for (Survey survey : surveys) {
-            // Fetch the assessment details for each survey
-            ResponseEntity<Assessment> qs = assessmentClient.getAssessmentBySetName(survey.getSetName());
-            if (qs.getStatusCode() == HttpStatus.OK) {
-                Assessment assessment = qs.getBody();
-                List<Question> questions = assessment.getQuestions();
+            try {
+                // Fetch the assessment details for each survey
+                ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    Assessment assessment = response.getBody();
+                    List<Question> questions = assessment.getQuestions();
 
-                // Create SurveyDTO and set the values
-                SurveyDTO surveyDTO = new SurveyDTO();
-                surveyDTO.setQuestions(questions);
-                surveyDTO.setSurveyId(survey.getSurveyId());
-                surveyDTO.setCompanyName(survey.getCompanyName());
-                surveyDTO.setStatus(survey.getStatus());
-                surveyDTO.setEmail(survey.getEmail());
-                surveyDTO.setDomainName(survey.getDomainName());
-                surveyDTO.setSetName(survey.getSetName());
+                    // Create SurveyDTO and set the values
+                    SurveyDTO surveyDTO = new SurveyDTO();
+                    surveyDTO.setQuestions(questions);
+                    surveyDTO.setSurveyId(survey.getSurveyId());
+                    surveyDTO.setCompanyName(survey.getCompanyName());
+                    surveyDTO.setStatus(survey.getStatus());
+                    surveyDTO.setEmail(survey.getEmail());
+                    surveyDTO.setDomainName(survey.getDomainName());
+                    surveyDTO.setSetName(survey.getSetName());
 
-                // Add to list of SurveyDTOs
-                surveyDTOs.add(surveyDTO);
+                    // Add to list of SurveyDTOs
+                    surveyDTOs.add(surveyDTO);
+                } else {
+                    // Log the issue and continue with the next survey
+                    System.err.println("Assessment not found for set name: " + survey.getSetName());
+                }
+            } catch (Exception e) {
+                // Log the exception and continue with the next survey
+                System.err.println("Error fetching assessment for survey ID: " + survey.getSurveyId() + " - " + e.getMessage());
             }
         }
         return surveyDTOs;
     }
-
 
     // Method to create a new survey
     public Survey createSurvey(Survey survey) {
         // Retrieve questions and options using AssessmentClient and add them to the survey
         ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
         if (response.getStatusCode() == HttpStatus.OK) {
+            // Here you can include logic to manipulate the assessment if needed.
             Assessment assessment = response.getBody();
-
+            // You can add questions to survey if needed based on the assessment data.
+        } else {
+            throw new NoSuchElementException("Assessment not found for set name: " + survey.getSetName());
         }
         return surveyRepository.save(survey);
     }
 
     // Method to update an existing survey
+    public Survey updateSurvey(String surveyId, Survey updatedSurvey) {
+        Survey existingSurvey = surveyRepository.findById(surveyId)
+                .orElseThrow(() -> new NoSuchElementException("Survey not found with ID: " + surveyId));
 
+        // Update the survey details
+        existingSurvey.setCompanyName(updatedSurvey.getCompanyName());
+        existingSurvey.setStatus(updatedSurvey.getStatus());
+        existingSurvey.setEmail(updatedSurvey.getEmail());
+        existingSurvey.setDomainName(updatedSurvey.getDomainName());
+        existingSurvey.setSetName(updatedSurvey.getSetName());
 
-
+        return surveyRepository.save(existingSurvey);
+    }
 }
