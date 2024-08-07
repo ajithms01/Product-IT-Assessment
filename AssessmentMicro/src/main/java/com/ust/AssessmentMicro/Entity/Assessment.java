@@ -1,11 +1,6 @@
 package com.ust.AssessmentMicro.Entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,13 +13,16 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Assessment {
+
     @Id
     private String setId;
     private String setName;
     private String createdBy;
     private String updatedBy;
     private String domain;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    private AssessmentStatus status = AssessmentStatus.PENDING;
 
     private LocalDateTime createdTimestamp;
     private LocalDateTime updatedTimestamp;
