@@ -15,10 +15,10 @@ import java.util.List;
 public class Assessment {
 
     @Id
-    private String setId;
+    private Long setId;
     private String setName;
     private String createdBy;
-    private String updatedBy;
+    private String updatedBy = "admin";
     private String domain;
 
     @Enumerated(EnumType.STRING)

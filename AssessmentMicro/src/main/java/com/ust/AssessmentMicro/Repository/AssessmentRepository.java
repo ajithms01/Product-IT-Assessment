@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface AssessmentRepository extends JpaRepository<Assessment, String> {
+public interface AssessmentRepository extends JpaRepository<Assessment, Long> {
     // Custom query method to find an assessment by its set name
     Optional<Assessment> findBySetName(String setName);
 }

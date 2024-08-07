@@ -14,8 +14,8 @@ public class Answer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id; // Primary key for Option entity
-    private String optionId;
+    private Long optionId;
+    private Long questionId;
     private String optionText;
     private String suggestion;
 

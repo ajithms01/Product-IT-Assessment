@@ -1,9 +1,6 @@
 package com.ust.AssessmentMicro.Entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,11 +13,16 @@ import java.util.List;
 @NoArgsConstructor
 public class Question {
     @Id
-    private String questionId;
-    private String questionName;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    private Long questionId;
+    private String questionName;// Unique identifier for the question (global across sets)
+    private Long setId; // Identifier for the set this question belongs to
+
+
 
     @OneToMany(cascade = CascadeType.ALL)
-    private List<Answer> options;
+    private List<Answer> options; // List of options for this question
 
-    // Getters and setters
+    // Constructors, getters, and setters
 }
