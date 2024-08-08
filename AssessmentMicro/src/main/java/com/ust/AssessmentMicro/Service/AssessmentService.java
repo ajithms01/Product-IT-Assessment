@@ -6,6 +6,8 @@ import com.ust.AssessmentMicro.Entity.Question;
 import com.ust.AssessmentMicro.Repository.AnswerRepo;
 import com.ust.AssessmentMicro.Repository.AssessmentRepository;
 import com.ust.AssessmentMicro.Repository.QuestionRepo;
+import com.ust.AssessmentMicro.dto.Answerdto;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AssessmentService {
@@ -43,6 +46,14 @@ public class AssessmentService {
         return assessment;
     }
 
+    public List<String> getQuestionNamesBySetName(String setName) {
+        Assessment assessment = assessmentRepository.findBySetName(setName)
+                .orElseThrow(() -> new NoSuchElementException("Assessment not found with set name: " + setName));
+        return assessment.getQuestions().stream()
+                .map(Question::getQuestionName)
+                .collect(Collectors.toList());
+    }
+
     // Method to create a new assessment
     public Assessment createAssessment(Assessment assessment) {
 
@@ -68,7 +79,7 @@ public class AssessmentService {
     }
 
     // Method to update a specific question within an assessment
-    public Optional<Assessment> updateQuestion(Long setId, Long questionId, Question questionDetails) {
+    public Optional<Assessment> updateQuestionOptions(Long setId, Long questionId, List<Answerdto> optionDTOs) {
         Assessment assessment = assessmentRepository.findById(setId)
                 .orElseThrow(() -> new NoSuchElementException("Assessment not found with set Id: " + setId));
 
@@ -77,24 +88,49 @@ public class AssessmentService {
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Question not found with ID: " + questionId));
 
-        question.setQuestionName(questionDetails.getQuestionName());
-        question.setOptions(questionDetails.getOptions());
+        // Clear existing options
+        question.getOptions().clear();
 
+        // Convert OptionDTO to Answer and add to the list
+        optionDTOs.forEach(dto -> {
+            Answer option = new Answer();
+            option.setOptionText(dto.getOptionText());
+            option.setSuggestion(dto.getSuggestion());
+            option.setQuestionId(questionId);
+            question.getOptions().add(option);
+            repo1.save(option);
+        });
+
+        // Save the updated question
+        repo2.save(question);
+
+        // Save the updated assessment
         assessmentRepository.save(assessment);
+
         return Optional.of(assessment);
     }
 
     // Method to delete a specific question within an assessment
+    @Transactional
     public boolean deleteQuestion(Long setId,Long questionId) {
         Assessment assessment = assessmentRepository.findById(setId)
                 .orElseThrow(() -> new NoSuchElementException("Assessment not found with set id: " + setId));
 
-        boolean removed = assessment.getQuestions().removeIf(question -> question.getQuestionId().equals(questionId));
-        if (!removed) {
-            throw new NoSuchElementException("Question not found with ID: " + questionId);
-        }
+        // Find the question to be removed
+        Question questionToRemove = assessment.getQuestions().stream()
+                .filter(question -> question.getQuestionId().equals(questionId))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Question not found with ID: " + questionId));
 
+        // Remove the question from the assessment
+        assessment.getQuestions().remove(questionToRemove);
+
+        // Save the assessment without the removed question
         assessmentRepository.save(assessment);
+
+        // Delete the question from the database
+        repo2.deleteById(questionId);
+
         return true;
     }
 }
