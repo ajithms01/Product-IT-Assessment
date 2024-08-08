@@ -15,6 +15,7 @@ import java.util.List;
 public class Assessment {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long setId;
     private String setName;
     private String createdBy;

@@ -1,8 +1,8 @@
 package com.example.AssessmentMicro.Controller;
 
-import com.example.AssessmentMicro.Entity.Assessment;
+import com.example.AssessmentMicro.dto.AssessmentDTO;
+import com.example.AssessmentMicro.dto.AnswerDTO;
 import com.example.AssessmentMicro.Service.AssessmentService;
-import com.example.AssessmentMicro.dto.Answerdto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,18 +23,19 @@ public class AssessmentController {
 
     // Endpoint to get all assessments
     @GetMapping
-    public ResponseEntity<List<Assessment>> getAllAssessments() {
-        List<Assessment> assessments = assessmentService.getAllAssessments();
-        return ResponseEntity.ok(assessments);
+    public ResponseEntity<List<AssessmentDTO>> getAllAssessments() {
+        List<AssessmentDTO> assessments = assessmentService.getAllAssessments();
+        return ResponseEntity.status(HttpStatus.OK).body(assessments);
     }
 
     @GetMapping("/{setName}/questions")
     public ResponseEntity<?> getQuestionNamesBySetName(@PathVariable String setName) {
         try {
             List<String> questionNames = assessmentService.getQuestionNamesBySetName(setName);
-            return ResponseEntity.ok(questionNames);
+            return ResponseEntity.status(HttpStatus.OK).body(questionNames);
         } catch (Exception e) {
-            return ResponseEntity.ok("Error retrieving question names: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving question names: " + e.getMessage());
         }
     }
 
@@ -42,45 +43,49 @@ public class AssessmentController {
     @GetMapping("/{setId}")
     public ResponseEntity<?> getAssessmentBySetId(@PathVariable Long setId) {
         try {
-            Optional<Assessment> assessment = assessmentService.getAssessmentBySetId(setId);
-            return assessment.isPresent() ? ResponseEntity.ok(assessment.get()) : ResponseEntity.ok("Assessment not found with set ID: " + setId);
+            Optional<AssessmentDTO> assessment = assessmentService.getAssessmentBySetId(setId);
+            return assessment.isPresent()
+                    ? ResponseEntity.status(HttpStatus.OK).body(assessment.get())
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Assessment not found with set ID: " + setId);
         } catch (Exception e) {
-            return ResponseEntity.ok("Error retrieving assessment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving assessment: " + e.getMessage());
         }
     }
 
     // Endpoint to create a new assessment
     @PostMapping
-    public ResponseEntity<?> createAssessment(@RequestBody Assessment assessment) {
+    public ResponseEntity<?> createAssessment(@RequestBody AssessmentDTO assessmentDTO) {
         try {
-            Assessment createdAssessment = assessmentService.createAssessment(assessment);
+            AssessmentDTO createdAssessment = assessmentService.createAssessment(assessmentDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdAssessment);
         } catch (Exception e) {
-            return ResponseEntity.ok("Error creating assessment: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error creating assessment: " + e.getMessage());
         }
     }
 
-    // Endpoint to update a specific question within an assessment
-    @PutMapping("/{setId}/{questionId}")
+    @PutMapping("/{setId}/questions/{questionId}")
     public ResponseEntity<?> updateQuestionOptions(@PathVariable Long setId, @PathVariable Long questionId,
-                                                   @RequestBody List<Answerdto> optionDTOs) {
+                                                   @RequestBody List<AnswerDTO> answerDTOs) {
         try {
-            Optional<Assessment> updatedAssessment = assessmentService.updateQuestionOptions(setId, questionId, optionDTOs);
-            return updatedAssessment.isPresent() ? ResponseEntity.ok(updatedAssessment.get()) :
-                    ResponseEntity.ok("Question not found with ID: " + questionId);
+            assessmentService.updateQuestionOptions(setId, questionId, answerDTOs);
+            return ResponseEntity.status(HttpStatus.OK).body("Question options updated successfully");
         } catch (Exception e) {
-            return ResponseEntity.ok("Error updating question options: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating question options: " + e.getMessage());
         }
     }
 
-    // Endpoint to delete a specific question within an assessment
-    @DeleteMapping("/{setId}/{questionId}")
-    public ResponseEntity<String> deleteQuestion(@PathVariable Long setId, @PathVariable Long questionId) {
+    @DeleteMapping("/{setId}/questions/{questionId}")
+    public ResponseEntity<?> deleteQuestion(@PathVariable Long setId, @PathVariable Long questionId) {
         try {
-            boolean isDeleted = assessmentService.deleteQuestion(setId, questionId);
-            return isDeleted ? ResponseEntity.ok("Question deleted successfully") : ResponseEntity.ok("Question not found with ID: " + questionId);
+            assessmentService.deleteQuestion(setId, questionId);
+            return ResponseEntity.status(HttpStatus.OK).body("Question deleted successfully");
         } catch (Exception e) {
-            return ResponseEntity.ok("Error deleting question: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error deleting question: " + e.getMessage());
         }
     }
 }

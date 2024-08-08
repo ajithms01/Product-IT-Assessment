@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Answerdto {
+public class AnswerDTO {
+
     private String optionText;
     private String suggestion;
 }

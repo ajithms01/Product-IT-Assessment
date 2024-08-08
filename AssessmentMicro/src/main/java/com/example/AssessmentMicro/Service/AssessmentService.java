@@ -1,16 +1,17 @@
 package com.example.AssessmentMicro.Service;
 
+import com.example.AssessmentMicro.dto.AnswerDTO;
+import com.example.AssessmentMicro.dto.AssessmentDTO;
+import com.example.AssessmentMicro.dto.QuestionDTO;
 import com.example.AssessmentMicro.Entity.Answer;
 import com.example.AssessmentMicro.Entity.Assessment;
+import com.example.AssessmentMicro.Entity.Question;
 import com.example.AssessmentMicro.Repository.AnswerRepo;
 import com.example.AssessmentMicro.Repository.AssessmentRepository;
 import com.example.AssessmentMicro.Repository.QuestionRepo;
-import com.example.AssessmentMicro.Entity.Question;
-import com.example.AssessmentMicro.dto.Answerdto;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -31,21 +32,15 @@ public class AssessmentService {
     }
 
     // Method to get all assessments
-    public List<Assessment> getAllAssessments() {
-        return assessmentRepository.findAll();
-    }
-
-    public Optional<Assessment> getAssessmentBySetName(String setName) {
-        return assessmentRepository.findBySetName(setName);
+    public List<AssessmentDTO> getAllAssessments() {
+        return assessmentRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     // Method to get an assessment by its set ID
-    public Optional<Assessment> getAssessmentBySetId(Long setId) {
-        Optional<Assessment> assessment = assessmentRepository.findById(setId);
-        if (assessment.isEmpty()) {
-            return Optional.empty();
-        }
-        return assessment;
+    public Optional<AssessmentDTO> getAssessmentBySetId(Long setId) {
+        return assessmentRepository.findById(setId).map(this::convertToDTO);
     }
 
     public List<String> getQuestionNamesBySetName(String setName) {
@@ -57,32 +52,22 @@ public class AssessmentService {
     }
 
     // Method to create a new assessment
-    public Assessment createAssessment(Assessment assessment) {
-        assessment.setCreatedTimestamp(LocalDateTime.now());
-        assessment.setUpdatedTimestamp(LocalDateTime.now());
-        assessment.setUpdatedBy("admin"); // Assuming default value for updatedBy
-
-        Assessment savedAssessment = assessmentRepository.save(assessment);
+    public AssessmentDTO createAssessment(AssessmentDTO assessmentDTO) {
+        Assessment assessment = convertToEntity(assessmentDTO);
+        assessment = assessmentRepository.save(assessment);
 
         for (Question question : assessment.getQuestions()) {
-            question.setSetId(savedAssessment.getSetId()); // Set the assessment setId in each question
-
-            Question savedQuestion = questionRepo.save(question);
-
-            for (Answer option : question.getOptions()) {
-                option.setQuestionId(savedQuestion.getQuestionId()); // Set the questionId in each option
-
-                answerRepo.save(option);
-            }
+            question.setSetId(assessment.getSetId()); // Set the assessment setId in each question
+            questionRepo.save(question);
         }
 
-        return savedAssessment;
+        return convertToDTO(assessment);
     }
 
-    // Method to update a specific question within an assessment
-    public Optional<Assessment> updateQuestionOptions(Long setId, Long questionId, List<Answerdto> optionDTOs) {
+    @Transactional
+    public void updateQuestionOptions(Long setId, Long questionId, List<AnswerDTO> answerDTOs) {
         Assessment assessment = assessmentRepository.findById(setId)
-                .orElseThrow(() -> new NoSuchElementException("Assessment not found with set Id: " + setId));
+                .orElseThrow(() -> new NoSuchElementException("Assessment not found with set ID: " + setId));
 
         Question question = assessment.getQuestions().stream()
                 .filter(q -> q.getQuestionId().equals(questionId))
@@ -91,47 +76,111 @@ public class AssessmentService {
 
         // Clear existing options
         question.getOptions().clear();
+        questionRepo.save(question); // Save the question with cleared options first
 
-        // Convert OptionDTO to Answer and add to the list
-        optionDTOs.forEach(dto -> {
-            Answer option = new Answer();
-            option.setOptionText(dto.getOptionText());
-            option.setSuggestion(dto.getSuggestion());
-            option.setQuestionId(questionId);
-            question.getOptions().add(option);
-            answerRepo.save(option);
-        });
+        // Convert AnswerDTO to Answer and add to the list
+        for (AnswerDTO answerDTO : answerDTOs) {
+            Answer answer = new Answer();
+            answer.setOptionText(answerDTO.getOptionText());
+            answer.setSuggestion(answerDTO.getSuggestion());
+            answer.setQuestionId(question.getQuestionId());
+            question.getOptions().add(answer);
+        }
 
         // Save the updated question
         questionRepo.save(question);
-
-        // Save the updated assessment
-        assessmentRepository.save(assessment);
-
-        return Optional.of(assessment);
     }
 
-    // Method to delete a specific question within an assessment
     @Transactional
-    public boolean deleteQuestion(Long setId, Long questionId) {
+    public void deleteQuestion(Long setId, Long questionId) {
         Assessment assessment = assessmentRepository.findById(setId)
-                .orElseThrow(() -> new NoSuchElementException("Assessment not found with set id: " + setId));
+                .orElseThrow(() -> new NoSuchElementException("Assessment not found with set ID: " + setId));
 
-        // Find the question to be removed
-        Question questionToRemove = assessment.getQuestions().stream()
-                .filter(question -> question.getQuestionId().equals(questionId))
-                .findFirst()
+        Question question = questionRepo.findById(questionId)
                 .orElseThrow(() -> new NoSuchElementException("Question not found with ID: " + questionId));
 
         // Remove the question from the assessment
-        assessment.getQuestions().remove(questionToRemove);
+        assessment.getQuestions().removeIf(q -> q.getQuestionId().equals(questionId));
 
-        // Save the assessment without the removed question
-        assessmentRepository.save(assessment);
-
-        // Delete the question from the database
+        // Delete the question from the repository
         questionRepo.deleteById(questionId);
 
-        return true;
+        // Save the updated assessment without the deleted question
+        assessmentRepository.save(assessment);
+    }
+
+    // Helper method to convert Assessment to AssessmentDTO
+    private AssessmentDTO convertToDTO(Assessment assessment) {
+        List<QuestionDTO> questionDTOs = assessment.getQuestions().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new AssessmentDTO(
+                assessment.getSetId(),
+                assessment.getSetName(),
+                assessment.getCreatedBy(),
+                assessment.getDomain(),
+                questionDTOs
+        );
+    }
+
+    // Helper method to convert Question to QuestionDTO
+    private QuestionDTO convertToDTO(Question question) {
+        List<AnswerDTO> answerDTOs = question.getOptions().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        return new QuestionDTO(
+                question.getQuestionName(),
+                question.getSetId(),
+                answerDTOs
+        );
+    }
+
+    // Helper method to convert Answer to AnswerDTO
+    private AnswerDTO convertToDTO(Answer answer) {
+        return new AnswerDTO(
+                answer.getOptionText(),
+                answer.getSuggestion()
+        );
+    }
+
+    // Helper method to convert AssessmentDTO to Assessment
+    private Assessment convertToEntity(AssessmentDTO assessmentDTO) {
+        Assessment assessment = new Assessment();
+        assessment.setSetName(assessmentDTO.getSetName());
+        assessment.setCreatedBy(assessmentDTO.getCreatedBy());
+        assessment.setDomain(assessmentDTO.getDomain());
+
+        List<Question> questions = assessmentDTO.getQuestions().stream()
+                .map(this::convertToEntity)
+                .collect(Collectors.toList());
+
+        assessment.setQuestions(questions);
+
+        return assessment;
+    }
+
+    // Helper method to convert QuestionDTO to Question
+    private Question convertToEntity(QuestionDTO questionDTO) {
+        Question question = new Question();
+        question.setQuestionName(questionDTO.getQuestionName());
+
+        List<Answer> options = questionDTO.getOptions().stream()
+                .map(this::convertToEntity)
+                .collect(Collectors.toList());
+
+        question.setOptions(options);
+
+        return question;
+    }
+
+    // Helper method to convert AnswerDTO to Answer
+    private Answer convertToEntity(AnswerDTO answerDTO) {
+        Answer option = new Answer();
+        option.setOptionText(answerDTO.getOptionText());
+        option.setSuggestion(answerDTO.getSuggestion());
+
+        return option;
     }
 }
