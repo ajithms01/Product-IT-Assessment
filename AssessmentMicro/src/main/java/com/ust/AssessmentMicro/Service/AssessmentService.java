@@ -6,8 +6,11 @@ import com.ust.AssessmentMicro.Entity.Question;
 import com.ust.AssessmentMicro.Repository.AnswerRepo;
 import com.ust.AssessmentMicro.Repository.AssessmentRepository;
 import com.ust.AssessmentMicro.Repository.QuestionRepo;
+<<<<<<< HEAD
 import com.ust.AssessmentMicro.dto.Answerdto;
 import jakarta.transaction.Transactional;
+=======
+>>>>>>> 68541fccae57944c3b97a0518bf94a5e5ee55101
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +37,12 @@ public class AssessmentService {
         return assessmentRepository.findAll();
     }
 
+<<<<<<< HEAD
     public Optional<Assessment> getAssessmentBySetName(String setName) {
         return assessmentRepository.findBySetName(setName);
     }
+=======
+>>>>>>> 68541fccae57944c3b97a0518bf94a5e5ee55101
     // Method to get an assessment by its set name
     public Optional<Assessment> getAssessmentBySetId(Long setId) {
         Optional<Assessment> assessment = assessmentRepository.findById(setId);
@@ -79,7 +85,11 @@ public class AssessmentService {
     }
 
     // Method to update a specific question within an assessment
+<<<<<<< HEAD
     public Optional<Assessment> updateQuestionOptions(Long setId, Long questionId, List<Answerdto> optionDTOs) {
+=======
+    public Optional<Assessment> updateQuestion(Long setId, Long questionId, Question questionDetails) {
+>>>>>>> 68541fccae57944c3b97a0518bf94a5e5ee55101
         Assessment assessment = assessmentRepository.findById(setId)
                 .orElseThrow(() -> new NoSuchElementException("Assessment not found with set Id: " + setId));
 
@@ -111,7 +121,10 @@ public class AssessmentService {
     }
 
     // Method to delete a specific question within an assessment
+<<<<<<< HEAD
     @Transactional
+=======
+>>>>>>> 68541fccae57944c3b97a0518bf94a5e5ee55101
     public boolean deleteQuestion(Long setId,Long questionId) {
         Assessment assessment = assessmentRepository.findById(setId)
                 .orElseThrow(() -> new NoSuchElementException("Assessment not found with set id: " + setId));

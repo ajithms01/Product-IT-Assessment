@@ -27,6 +27,7 @@ public class AssessmentController {
         return ResponseEntity.ok(assessments);
     }
 
+<<<<<<< HEAD
     @GetMapping("/{setName}/questions")
     public ResponseEntity<?> getQuestionNamesBySetName(@PathVariable String setName) {
         try {
@@ -46,6 +47,15 @@ public class AssessmentController {
         } catch (Exception e) {
             return ResponseEntity.ok("Error retrieving assessment: " + e.getMessage());
         }
+=======
+    // Endpoint to get an assessment by its set name
+    @GetMapping("/{setId}")
+    public ResponseEntity<Assessment> getAssessmentBySetId(@PathVariable Long setId) {
+
+            Optional<Assessment> assessment = assessmentService.getAssessmentBySetId(setId);
+        return assessment.isPresent() ? ResponseEntity.ok(assessment.get()) : ResponseEntity.notFound().build();
+
+>>>>>>> 68541fccae57944c3b97a0518bf94a5e5ee55101
     }
 
     // Endpoint to create a new assessment
@@ -61,6 +71,7 @@ public class AssessmentController {
 
     // Endpoint to update a specific question within an assessment
     @PutMapping("/{setId}/{questionId}")
+<<<<<<< HEAD
     public ResponseEntity<?> updateQuestionOptions(@PathVariable Long setId, @PathVariable Long questionId,
                                                    @RequestBody List<Answerdto> optionDTOs) {
         try {
@@ -70,10 +81,16 @@ public class AssessmentController {
         } catch (Exception e) {
             return ResponseEntity.ok("Error updating question options: " + e.getMessage());
         }
+=======
+    public ResponseEntity<Assessment> updateQuestion(@PathVariable Long setId, @PathVariable Long questionId, @RequestBody Question questionDetails) {
+        Optional<Assessment> updatedAssessment = assessmentService.updateQuestion(setId, questionId, questionDetails);
+        return updatedAssessment.isPresent() ? ResponseEntity.ok(updatedAssessment.get()) : ResponseEntity.notFound().build();
+>>>>>>> 68541fccae57944c3b97a0518bf94a5e5ee55101
     }
 
     // Endpoint to delete a specific question within an assessment
     @DeleteMapping("/{setId}/{questionId}")
+<<<<<<< HEAD
     public ResponseEntity<String> deleteQuestion(@PathVariable Long setId, @PathVariable Long questionId) {
         try {
             boolean isDeleted = assessmentService.deleteQuestion(setId, questionId);
@@ -81,5 +98,10 @@ public class AssessmentController {
         } catch (Exception e) {
             return ResponseEntity.ok("Error deleting question: " + e.getMessage());
         }
+=======
+    public ResponseEntity<Void> deleteQuestion(@PathVariable Long setId, @PathVariable Long questionId) {
+        boolean isDeleted = assessmentService.deleteQuestion(setId, questionId);
+        return isDeleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+>>>>>>> 68541fccae57944c3b97a0518bf94a5e5ee55101
     }
 }
