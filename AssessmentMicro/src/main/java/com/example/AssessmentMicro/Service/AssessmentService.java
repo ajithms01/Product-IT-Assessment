@@ -8,7 +8,6 @@ import com.example.AssessmentMicro.Repository.QuestionRepo;
 import com.example.AssessmentMicro.Entity.Question;
 import com.example.AssessmentMicro.dto.Answerdto;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,14 +19,16 @@ import java.util.stream.Collectors;
 @Service
 public class AssessmentService {
 
-    @Autowired
-    private AssessmentRepository assessmentRepository;
+    private final AssessmentRepository assessmentRepository;
+    private final AnswerRepo answerRepo;
+    private final QuestionRepo questionRepo;
 
-    @Autowired
-    private AnswerRepo repo1;
-
-    @Autowired
-    private QuestionRepo repo2;
+    // Constructor-based injection
+    public AssessmentService(AssessmentRepository assessmentRepository, AnswerRepo answerRepo, QuestionRepo questionRepo) {
+        this.assessmentRepository = assessmentRepository;
+        this.answerRepo = answerRepo;
+        this.questionRepo = questionRepo;
+    }
 
     // Method to get all assessments
     public List<Assessment> getAllAssessments() {
@@ -37,11 +38,12 @@ public class AssessmentService {
     public Optional<Assessment> getAssessmentBySetName(String setName) {
         return assessmentRepository.findBySetName(setName);
     }
-    // Method to get an assessment by its set name
+
+    // Method to get an assessment by its set ID
     public Optional<Assessment> getAssessmentBySetId(Long setId) {
         Optional<Assessment> assessment = assessmentRepository.findById(setId);
-        if(assessment.isEmpty()){
-            return null;
+        if (assessment.isEmpty()) {
+            return Optional.empty();
         }
         return assessment;
     }
@@ -56,7 +58,6 @@ public class AssessmentService {
 
     // Method to create a new assessment
     public Assessment createAssessment(Assessment assessment) {
-
         assessment.setCreatedTimestamp(LocalDateTime.now());
         assessment.setUpdatedTimestamp(LocalDateTime.now());
         assessment.setUpdatedBy("admin"); // Assuming default value for updatedBy
@@ -66,12 +67,12 @@ public class AssessmentService {
         for (Question question : assessment.getQuestions()) {
             question.setSetId(savedAssessment.getSetId()); // Set the assessment setId in each question
 
-            Question savedQuestion = repo2.save(question);
+            Question savedQuestion = questionRepo.save(question);
 
             for (Answer option : question.getOptions()) {
                 option.setQuestionId(savedQuestion.getQuestionId()); // Set the questionId in each option
 
-                repo1.save(option);
+                answerRepo.save(option);
             }
         }
 
@@ -98,11 +99,11 @@ public class AssessmentService {
             option.setSuggestion(dto.getSuggestion());
             option.setQuestionId(questionId);
             question.getOptions().add(option);
-            repo1.save(option);
+            answerRepo.save(option);
         });
 
         // Save the updated question
-        repo2.save(question);
+        questionRepo.save(question);
 
         // Save the updated assessment
         assessmentRepository.save(assessment);
@@ -112,7 +113,7 @@ public class AssessmentService {
 
     // Method to delete a specific question within an assessment
     @Transactional
-    public boolean deleteQuestion(Long setId,Long questionId) {
+    public boolean deleteQuestion(Long setId, Long questionId) {
         Assessment assessment = assessmentRepository.findById(setId)
                 .orElseThrow(() -> new NoSuchElementException("Assessment not found with set id: " + setId));
 
@@ -129,7 +130,7 @@ public class AssessmentService {
         assessmentRepository.save(assessment);
 
         // Delete the question from the database
-        repo2.deleteById(questionId);
+        questionRepo.deleteById(questionId);
 
         return true;
     }

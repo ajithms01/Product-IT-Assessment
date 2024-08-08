@@ -3,7 +3,6 @@ package com.example.AssessmentMicro.Controller;
 import com.example.AssessmentMicro.Entity.Assessment;
 import com.example.AssessmentMicro.Service.AssessmentService;
 import com.example.AssessmentMicro.dto.Answerdto;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +14,12 @@ import java.util.Optional;
 @RequestMapping("/assessment")
 public class AssessmentController {
 
-    @Autowired
-    private AssessmentService assessmentService;
+    private final AssessmentService assessmentService;
+
+    // Constructor-based injection
+    public AssessmentController(AssessmentService assessmentService) {
+        this.assessmentService = assessmentService;
+    }
 
     // Endpoint to get all assessments
     @GetMapping
