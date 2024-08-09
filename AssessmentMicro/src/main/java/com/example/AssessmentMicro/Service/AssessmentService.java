@@ -119,9 +119,9 @@ public class AssessmentService {
                 .collect(Collectors.toList());
 
         return new AssessmentDTO(
-                assessment.getSetId(),
+
                 assessment.getSetName(),
-                assessment.getCreatedBy(),
+
                 assessment.getDomain(),
                 questionDTOs
         );
@@ -135,7 +135,7 @@ public class AssessmentService {
 
         return new QuestionDTO(
                 question.getQuestionName(),
-                question.getSetId(),
+
                 answerDTOs
         );
     }
@@ -152,7 +152,6 @@ public class AssessmentService {
     private Assessment convertToEntity(AssessmentDTO assessmentDTO) {
         Assessment assessment = new Assessment();
         assessment.setSetName(assessmentDTO.getSetName());
-        assessment.setCreatedBy(assessmentDTO.getCreatedBy());
         assessment.setDomain(assessmentDTO.getDomain());
 
         List<Question> questions = assessmentDTO.getQuestions().stream()

@@ -18,7 +18,7 @@ public class Assessment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long setId;
     private String setName;
-    private String createdBy;
+    private String createdBy = "admin";
     private String updatedBy = "admin";
     private String domain;
 

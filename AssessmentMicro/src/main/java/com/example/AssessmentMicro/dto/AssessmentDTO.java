@@ -11,9 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 public class AssessmentDTO {
 
-    private Long setId;
     private String setName;
-    private String createdBy;
     private String domain;
     private List<QuestionDTO> questions;
 }
