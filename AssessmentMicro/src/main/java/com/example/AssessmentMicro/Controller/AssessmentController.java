@@ -1,10 +1,9 @@
 package com.example.AssessmentMicro.Controller;
 
 import com.example.AssessmentMicro.Entity.Assessment;
-import com.example.AssessmentMicro.dto.AssessmentDTO;
-import com.example.AssessmentMicro.dto.AnswerDTO;
 import com.example.AssessmentMicro.Service.AssessmentService;
-import org.springframework.http.HttpStatus;
+import com.example.AssessmentMicro.dto.AnswerDTO;
+import com.example.AssessmentMicro.dto.AssessmentDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,53 +16,49 @@ public class AssessmentController {
 
     private final AssessmentService assessmentService;
 
-    // Constructor-based injection
     public AssessmentController(AssessmentService assessmentService) {
         this.assessmentService = assessmentService;
     }
 
-    // Endpoint to get all assessments
     @GetMapping
-    public ResponseEntity<List<Assessment>> getAllAssessments() {
-        List<Assessment> assessments = assessmentService.getAllAssessments();
-        return ResponseEntity.status(HttpStatus.OK).body(assessments);
+    public ResponseEntity<?> getAllAssessments() {
+        try {
+            List<Assessment> assessments = assessmentService.getAllAssessments();
+            return ResponseEntity.ok(assessments);
+        } catch (Exception e) {
+            return ResponseEntity.ok("Error retrieving assessments: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{setName}/questions")
     public ResponseEntity<?> getQuestionNamesBySetName(@PathVariable String setName) {
         try {
             List<String> questionNames = assessmentService.getQuestionNamesBySetName(setName);
-            return ResponseEntity.status(HttpStatus.OK).body(questionNames);
+            return ResponseEntity.ok(questionNames);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error retrieving question names: " + e.getMessage());
+            return ResponseEntity.ok("Error retrieving question names: " + e.getMessage());
         }
     }
 
-    // Endpoint to get an assessment by its set ID
     @GetMapping("/{setId}")
     public ResponseEntity<?> getAssessmentBySetId(@PathVariable Long setId) {
         try {
             Optional<AssessmentDTO> assessment = assessmentService.getAssessmentBySetId(setId);
             return assessment.isPresent()
-                    ? ResponseEntity.status(HttpStatus.OK).body(assessment.get())
-                    : ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Assessment not found with set ID: " + setId);
+                    ? ResponseEntity.ok(assessment.get())
+                    : ResponseEntity.ok("Assessment not found with set ID: " + setId);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error retrieving assessment: " + e.getMessage());
+            return ResponseEntity.ok("Error retrieving assessment: " + e.getMessage());
         }
     }
 
-    // Endpoint to create a new assessment
     @PostMapping
     public ResponseEntity<?> createAssessment(@RequestBody AssessmentDTO assessmentDTO) {
         try {
             AssessmentDTO createdAssessment = assessmentService.createAssessment(assessmentDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdAssessment);
+            return ResponseEntity.ok(createdAssessment);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error creating assessment: " + e.getMessage());
+            return ResponseEntity.ok("Error creating assessment: " + e.getMessage());
         }
     }
 
@@ -72,10 +67,9 @@ public class AssessmentController {
                                                    @RequestBody List<AnswerDTO> answerDTOs) {
         try {
             assessmentService.updateQuestionOptions(setId, questionId, answerDTOs);
-            return ResponseEntity.status(HttpStatus.OK).body("Question options updated successfully");
+            return ResponseEntity.ok("Question options updated successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error updating question options: " + e.getMessage());
+            return ResponseEntity.ok("Error updating question options: " + e.getMessage());
         }
     }
 
@@ -83,10 +77,9 @@ public class AssessmentController {
     public ResponseEntity<?> deleteQuestion(@PathVariable Long setId, @PathVariable Long questionId) {
         try {
             assessmentService.deleteQuestion(setId, questionId);
-            return ResponseEntity.status(HttpStatus.OK).body("Question deleted successfully");
+            return ResponseEntity.ok("Question deleted successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error deleting question: " + e.getMessage());
+            return ResponseEntity.ok("Error deleting question: " + e.getMessage());
         }
     }
 }
