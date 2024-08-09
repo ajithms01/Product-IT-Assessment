@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -21,8 +22,9 @@ public class Question {
 
 
 
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<Answer> options; // List of options for this question
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "questionId")
+    private List<Answer> options = new ArrayList<>();
 
     // Constructors, getters, and setters
 }

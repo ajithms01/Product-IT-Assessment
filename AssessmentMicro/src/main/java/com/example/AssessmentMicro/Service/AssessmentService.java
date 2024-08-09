@@ -12,6 +12,8 @@ import com.example.AssessmentMicro.Repository.QuestionRepo;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -32,10 +34,8 @@ public class AssessmentService {
     }
 
     // Method to get all assessments
-    public List<AssessmentDTO> getAllAssessments() {
-        return assessmentRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public List<Assessment> getAllAssessments() {
+        return new ArrayList<>(assessmentRepository.findAll());
     }
 
     // Method to get an assessment by its set ID
@@ -74,22 +74,20 @@ public class AssessmentService {
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Question not found with ID: " + questionId));
 
-        // Clear existing options
-        question.getOptions().clear();
-        questionRepo.save(question); // Save the question with cleared options first
-
-        // Convert AnswerDTO to Answer and add to the list
+        // Iterate through the list of new answerDTOs
         for (AnswerDTO answerDTO : answerDTOs) {
             Answer answer = new Answer();
             answer.setOptionText(answerDTO.getOptionText());
             answer.setSuggestion(answerDTO.getSuggestion());
             answer.setQuestionId(question.getQuestionId());
-            question.getOptions().add(answer);
+            answerRepo.save(answer); // Save each new answer
+            question.getOptions().add(answer); // Add to the existing options list
         }
 
-        // Save the updated question
+        // Save the updated question with new options added
         questionRepo.save(question);
     }
+
 
     @Transactional
     public void deleteQuestion(Long setId, Long questionId) {
@@ -98,6 +96,9 @@ public class AssessmentService {
 
         Question question = questionRepo.findById(questionId)
                 .orElseThrow(() -> new NoSuchElementException("Question not found with ID: " + questionId));
+
+        // Delete all options associated with the question
+        answerRepo.deleteByQuestionId(questionId);
 
         // Remove the question from the assessment
         assessment.getQuestions().removeIf(q -> q.getQuestionId().equals(questionId));
@@ -108,6 +109,8 @@ public class AssessmentService {
         // Save the updated assessment without the deleted question
         assessmentRepository.save(assessment);
     }
+
+
 
     // Helper method to convert Assessment to AssessmentDTO
     private AssessmentDTO convertToDTO(Assessment assessment) {

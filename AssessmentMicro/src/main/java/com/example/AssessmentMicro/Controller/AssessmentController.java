@@ -1,5 +1,6 @@
 package com.example.AssessmentMicro.Controller;
 
+import com.example.AssessmentMicro.Entity.Assessment;
 import com.example.AssessmentMicro.dto.AssessmentDTO;
 import com.example.AssessmentMicro.dto.AnswerDTO;
 import com.example.AssessmentMicro.Service.AssessmentService;
@@ -23,8 +24,8 @@ public class AssessmentController {
 
     // Endpoint to get all assessments
     @GetMapping
-    public ResponseEntity<List<AssessmentDTO>> getAllAssessments() {
-        List<AssessmentDTO> assessments = assessmentService.getAllAssessments();
+    public ResponseEntity<List<Assessment>> getAllAssessments() {
+        List<Assessment> assessments = assessmentService.getAllAssessments();
         return ResponseEntity.status(HttpStatus.OK).body(assessments);
     }
 
