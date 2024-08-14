@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/survey")
@@ -29,9 +31,18 @@ public class SurveyController {
     }
 
     @PostMapping
-    public ResponseEntity<Survey> createSurvey(@RequestBody Survey survey) {
-        Survey createdSurvey = surveyService.createSurvey(survey);
-        return new ResponseEntity<>(createdSurvey, HttpStatus.CREATED);
+    public ResponseEntity<String> createSurvey(@RequestBody Survey survey) {
+        try {
+            Survey createdSurvey = surveyService.createSurvey(survey);
+
+            return new ResponseEntity<>("Survey created successfully", HttpStatus.CREATED);
+        }
+         catch (Exception e) {
+
+            return new ResponseEntity<>("SetName not found: " + survey.getSetName(), HttpStatus.OK);
+        }
     }
+
+
 }
 

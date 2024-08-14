@@ -186,7 +186,7 @@ public class AssessmentService {
         return option;
     }
 
-    public Optional<AssessmentDTO> getAssessmentBySetName(String setName) {
-        return assessmentRepository.findBySetName(setName).map(this::convertToDTO);
+    public Optional<Assessment> getAssessmentBySetName(String setName) {
+        return assessmentRepository.findBySetName(setName);
     }
 }

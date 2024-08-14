@@ -17,6 +17,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @Service
 public class SurveyService {
@@ -77,15 +79,7 @@ public class SurveyService {
                         Assessment assessment = response.getBody();
                         List<Question> questions = assessment.getQuestions();
 
-                        // Log the assessment details
-//                        logger.info("Fetched assessment: {}", assessment);
-//
-//                        for (Question question : questions) {
-//                            // Log each question to check if optionId and questionId are null
-//                            logger.info("Question: {}", question);
-//                        }
 
-                        // Create SurveyDTO and set the values
                         SurveyDTO surveyDTO = new SurveyDTO();
                         surveyDTO.setQuestions(questions);
                         surveyDTO.setSurveyId(survey.getSurveyId());
@@ -113,30 +107,25 @@ public class SurveyService {
 
     // Method to create a new survey
     public Survey createSurvey(Survey survey) {
-        // Retrieve questions and options using AssessmentClient and add them to the survey
-        ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
-        if (response.getStatusCode() == HttpStatus.OK) {
-            // Here you can include logic to manipulate the assessment if needed.
-            Assessment assessment = response.getBody();
-            // You can add questions to survey if needed based on the assessment data.
-        } else {
-            throw new NoSuchElementException("Assessment not found for set name: " + survey.getSetName());
+
+
+            ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
+            if (response.getStatusCode() == HttpStatus.OK) {
+
+                Assessment assessment = response.getBody();
+
+            } else {
+                throw new NoSuchElementException("Assessment not found for set name: " + survey.getSetName());
+            }
+
+            return surveyRepository.save(survey);
+
         }
-        return surveyRepository.save(survey);
     }
 
-    // Method to update an existing survey
-//    public Survey updateSurvey(Long surveyId, Survey updatedSurvey) {
-//        Survey existingSurvey = surveyRepository.findById(surveyId)
-//                .orElseThrow(() -> new NoSuchElementException("Survey not found with ID: " + surveyId));
-//
-//        // Update the survey details
-//        existingSurvey.setCompanyName(updatedSurvey.getCompanyName());
-//        existingSurvey.setStatus(updatedSurvey.getStatus());
-//        existingSurvey.setEmail(updatedSurvey.getEmail());
-//        existingSurvey.setDomainName(updatedSurvey.getDomainName());
-//        existingSurvey.setSetName(updatedSurvey.getSetName());
-//
-//        return surveyRepository.save(existingSurvey);
-//    }
-}
+
+
+
+
+
+

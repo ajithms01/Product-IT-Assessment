@@ -55,7 +55,7 @@ public class AssessmentController {
     @GetMapping("/bysetname/{setName}")
     public ResponseEntity<?> getAssessmentBySetName(@PathVariable String setName) {
         try {
-            Optional<AssessmentDTO> assessment = assessmentService.getAssessmentBySetName(setName);
+            Optional<Assessment> assessment = assessmentService.getAssessmentBySetName(setName);
             return assessment.isPresent()
                     ? ResponseEntity.ok(assessment.get())
                     : ResponseEntity.ok("Assessment not found with set Name: " + setName);
