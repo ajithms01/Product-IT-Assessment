@@ -23,6 +23,7 @@ public class Survey {
     private String email;
     private String setName;
     private String status;
+    private List<Long> questionIds;
 
 
 

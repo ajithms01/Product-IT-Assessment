@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -106,21 +108,57 @@ public class SurveyService {
 
 
     // Method to create a new survey
-    public Survey createSurvey(Survey survey) {
+//    public Survey createSurvey(Survey survey) {
+//
+//
+//            ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
+//            if (response.getStatusCode() == HttpStatus.OK) {
+//
+//                Assessment assessment = response.getBody();
+//
+//            } else {
+//                throw new NoSuchElementException("Assessment not found for set name: " + survey.getSetName());
+//            }
+//
+//            return surveyRepository.save(survey);
+//
+//        }
 
-
+    public ResponseEntity<String> createSurvey(Survey survey) {
+        try {
+            // Retrieve assessment based on setName
             ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
-            if (response.getStatusCode() == HttpStatus.OK) {
 
+            if (response.getStatusCode() == HttpStatus.OK) {
                 Assessment assessment = response.getBody();
+                List<Question> allQuestions = assessment.getQuestions();
+                List<Long> providedQuestionIds = survey.getQuestionIds(); // Assuming Survey has a list of question IDs
+
+                // Filter the questions based on provided IDs
+                List<Question> selectedQuestions = allQuestions.stream()
+                        .filter(question -> providedQuestionIds.contains(question.getQuestionId()))
+                        .collect(Collectors.toList());
+
+                // Check if all provided question IDs are found
+                if (selectedQuestions.size() != providedQuestionIds.size()) {
+                    return new ResponseEntity<>("One or more question IDs not found", HttpStatus.OK);
+                }
+
+                // Save the Survey object
+                surveyRepository.save(survey);
+                return new ResponseEntity<>("Survey created successfully", HttpStatus.CREATED);
 
             } else {
-                throw new NoSuchElementException("Assessment not found for set name: " + survey.getSetName());
+                // Assessment not found for setName
+                return new ResponseEntity<>("Assessment not found for set name: " + survey.getSetName(), HttpStatus.OK);
             }
 
-            return surveyRepository.save(survey);
-
+        } catch (Exception e) {
+            // Handle unexpected exceptions
+            return new ResponseEntity<>("Error retrieving assessment: " + e.getMessage(), HttpStatus.OK);
         }
+    }
+
     }
 
 

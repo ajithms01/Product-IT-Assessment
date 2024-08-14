@@ -30,18 +30,34 @@ public class SurveyController {
         return ResponseEntity.ok(surveys);
     }
 
-    @PostMapping
+
+//    public ResponseEntity<String> createSurvey(@RequestBody Survey survey) {
+//        try {
+//            Survey createdSurvey = surveyService.createSurvey(survey);
+//
+//            return new ResponseEntity<>("Survey created successfully", HttpStatus.CREATED);
+//        }
+//         catch (Exception e) {
+//
+//            return new ResponseEntity<>("SetName not found: " + survey.getSetName(), HttpStatus.OK);
+//        }
+//    }
+  @PostMapping
     public ResponseEntity<String> createSurvey(@RequestBody Survey survey) {
         try {
-            Survey createdSurvey = surveyService.createSurvey(survey);
+            // Call the service to create a survey
+            ResponseEntity<String> response = surveyService.createSurvey(survey);
 
-            return new ResponseEntity<>("Survey created successfully", HttpStatus.CREATED);
-        }
-         catch (Exception e) {
+            // Return the response from the service
+            return response;
 
-            return new ResponseEntity<>("SetName not found: " + survey.getSetName(), HttpStatus.OK);
+        } catch (Exception e) {
+            // Return a generic error message if something goes wrong
+            return new ResponseEntity<>("Error occurred while creating survey: " + e.getMessage(), HttpStatus.OK);
         }
     }
+
+
 
 
 }
