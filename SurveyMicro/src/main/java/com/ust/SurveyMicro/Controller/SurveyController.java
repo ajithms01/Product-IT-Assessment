@@ -17,7 +17,7 @@ public class SurveyController {
     private SurveyService surveyService;
 
     @GetMapping("/{survey_id}")
-    public ResponseEntity<SurveyDTO> getSurveyById(@PathVariable("survey_id") String surveyId) {
+    public ResponseEntity<SurveyDTO> getSurveyById(@PathVariable("survey_id") Long surveyId) {
         SurveyDTO survey = surveyService.getSurveyById(surveyId);
         return ResponseEntity.ok(survey);
     }

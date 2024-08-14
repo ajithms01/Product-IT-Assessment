@@ -1,9 +1,6 @@
 package com.ust.SurveyMicro.Enitity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +14,9 @@ import java.util.List;
 public class Question {
 
     @Id
-    private String questionId;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+
+    private Long questionId;
     private String questionName;
 
     @OneToMany(cascade = CascadeType.ALL)

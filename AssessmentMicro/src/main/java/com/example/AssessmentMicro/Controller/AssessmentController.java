@@ -52,6 +52,18 @@ public class AssessmentController {
         }
     }
 
+    @GetMapping("/bysetname/{setName}")
+    public ResponseEntity<?> getAssessmentBySetName(@PathVariable String setName) {
+        try {
+            Optional<AssessmentDTO> assessment = assessmentService.getAssessmentBySetName(setName);
+            return assessment.isPresent()
+                    ? ResponseEntity.ok(assessment.get())
+                    : ResponseEntity.ok("Assessment not found with set Name: " + setName);
+        } catch (Exception e) {
+            return ResponseEntity.ok("Error retrieving assessment: " + e.getMessage());
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> createAssessment(@RequestBody AssessmentDTO assessmentDTO) {
         try {

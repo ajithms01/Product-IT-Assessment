@@ -19,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 public class Assessment {
     @Id
-    private String setId;
+    private Long setId;
     private String setName;
     private String createdBy;
     private String updatedBy;

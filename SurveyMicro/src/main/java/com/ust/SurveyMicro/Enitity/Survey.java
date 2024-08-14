@@ -1,9 +1,6 @@
 package com.ust.SurveyMicro.Enitity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,7 +15,9 @@ import java.util.List;
 @NoArgsConstructor
 public class Survey {
     @Id
-    private String surveyId;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+
+    private Long surveyId;
     private String domainName;
     private String companyName;
     private String email;
