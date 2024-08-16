@@ -11,10 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -62,108 +59,104 @@ public class SurveyService {
         }
     }
 
-    // Method to get all surveys
+    public List<SurveyDTO> getAllSurveys() {
+        List<Survey> surveys = surveyRepository.findAll();
+        List<SurveyDTO> surveyDTOs = new ArrayList<>();
+
+        for (Survey survey : surveys) {
+            try {
+                // Fetch the assessment details for each survey
+                ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    Assessment assessment = response.getBody();
+                    List<Question> allQuestions = assessment.getQuestions();
+
+                    // Convert the comma-separated questionIds string to a List<Long>
+                    String questionIdsString = survey.getQuestionIds(); // Assuming this is the comma-separated string
+                    List<Long> questionIds = Arrays.stream(questionIdsString.split(","))
+                            .map(Long::parseLong)
+                            .collect(Collectors.toList());
+
+                    // Filter the questions based on the questionIds
+                    List<Question> filteredQuestions = allQuestions.stream()
+                            .filter(question -> questionIds.contains(question.getQuestionId()))
+                            .collect(Collectors.toList());
+
+                    // Create the SurveyDTO object
+                    SurveyDTO surveyDTO = new SurveyDTO();
+                    surveyDTO.setQuestions(filteredQuestions);
+                    surveyDTO.setSurveyId(survey.getSurveyId());
+                    surveyDTO.setCompanyName(survey.getCompanyName());
+                    surveyDTO.setStatus(survey.getStatus());
+                    surveyDTO.setEmail(survey.getEmail());
+                    surveyDTO.setDomainName(survey.getDomainName());
+                    surveyDTO.setSetName(survey.getSetName());
+
+                    // Add to list of SurveyDTOs
+                    surveyDTOs.add(surveyDTO);
+                } else {
+                    // Log the issue and continue with the next survey
+                    logger.error("Assessment not found for set name: {}", survey.getSetName());
+                }
+            } catch (Exception e) {
+                // Log the exception and continue with the next survey
+                logger.error("Error fetching assessment for survey ID: {} - {}", survey.getSurveyId(), e.getMessage());
+            }
+        }
+        return surveyDTOs;
+    }
 
 
+        public ResponseEntity<String> createSurvey (Survey survey){
+            try {
+                // Retrieve assessment based on setName
+                System.out.println(survey);
+                ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
 
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    Assessment assessment = response.getBody();
+                    List<Question> allQuestions = assessment.getQuestions();
 
+                    // Convert the comma-separated questionIds string to a List<Long>
+                    String questionIdsString = survey.getQuestionIds(); // Assuming this is the comma-separated string
+                    List<Long> providedQuestionIds = Arrays.stream(questionIdsString.split(","))
+                            .map(Long::parseLong)
+                            .collect(Collectors.toList());
 
+                    // Filter the questions based on provided IDs
+                    List<Question> selectedQuestions = allQuestions.stream()
+                            .filter(question -> providedQuestionIds.contains(question.getQuestionId()))
+                            .collect(Collectors.toList());
 
-        public List<SurveyDTO> getAllSurveys() {
-            List<Survey> surveys = surveyRepository.findAll();
-            List<SurveyDTO> surveyDTOs = new ArrayList<>();
-
-            for (Survey survey : surveys) {
-                try {
-                    // Fetch the assessment details for each survey
-                    ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
-                    if (response.getStatusCode() == HttpStatus.OK) {
-                        Assessment assessment = response.getBody();
-                        List<Question> questions = assessment.getQuestions();
-
-
-                        SurveyDTO surveyDTO = new SurveyDTO();
-                        surveyDTO.setQuestions(questions);
-                        surveyDTO.setSurveyId(survey.getSurveyId());
-                        surveyDTO.setCompanyName(survey.getCompanyName());
-                        surveyDTO.setStatus(survey.getStatus());
-                        surveyDTO.setEmail(survey.getEmail());
-                        surveyDTO.setDomainName(survey.getDomainName());
-                        surveyDTO.setSetName(survey.getSetName());
-
-                        // Add to list of SurveyDTOs
-                        surveyDTOs.add(surveyDTO);
-                    } else {
-                        // Log the issue and continue with the next survey
-                        logger.error("Assessment not found for set name: {}", survey.getSetName());
+                    // Check if all provided question IDs are found
+                    if (selectedQuestions.size() != providedQuestionIds.size()) {
+                        return new ResponseEntity<>("One or more question IDs not found", HttpStatus.OK);
                     }
-                } catch (Exception e) {
-                    // Log the exception and continue with the next survey
-                    logger.error("Error fetching assessment for survey ID: {} - {}", survey.getSurveyId(), e.getMessage());
-                }
-            }
-            return surveyDTOs;
-        }
 
+                    // Convert the list of Long IDs back to a comma-separated string
+                    String updatedQuestionIds = selectedQuestions.stream()
+                            .map(question -> String.valueOf(question.getQuestionId()))
+                            .collect(Collectors.joining(","));
+                    // Set the questionIds back to the survey object
+                    survey.setQuestionIds(updatedQuestionIds);
 
+                    // Save the Survey object
+                    surveyRepository.save(survey);
+                    return new ResponseEntity<>("Survey created successfully", HttpStatus.CREATED);
 
-    // Method to create a new survey
-//    public Survey createSurvey(Survey survey) {
-//
-//
-//            ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
-//            if (response.getStatusCode() == HttpStatus.OK) {
-//
-//                Assessment assessment = response.getBody();
-//
-//            } else {
-//                throw new NoSuchElementException("Assessment not found for set name: " + survey.getSetName());
-//            }
-//
-//            return surveyRepository.save(survey);
-//
-//        }
-
-    public ResponseEntity<String> createSurvey(Survey survey) {
-        try {
-            // Retrieve assessment based on setName
-            ResponseEntity<Assessment> response = assessmentClient.getAssessmentBySetName(survey.getSetName());
-
-            if (response.getStatusCode() == HttpStatus.OK) {
-                Assessment assessment = response.getBody();
-                List<Question> allQuestions = assessment.getQuestions();
-                List<Long> providedQuestionIds = survey.getQuestionIds(); // Assuming Survey has a list of question IDs
-
-                // Filter the questions based on provided IDs
-                List<Question> selectedQuestions = allQuestions.stream()
-                        .filter(question -> providedQuestionIds.contains(question.getQuestionId()))
-                        .collect(Collectors.toList());
-
-                // Check if all provided question IDs are found
-                if (selectedQuestions.size() != providedQuestionIds.size()) {
-                    return new ResponseEntity<>("One or more question IDs not found", HttpStatus.OK);
+                } else {
+                    // Assessment not found for setName
+                    return new ResponseEntity<>("Assessment not found for set name: " + survey.getSetName(), HttpStatus.OK);
                 }
 
-                // Save the Survey object
-                surveyRepository.save(survey);
-                return new ResponseEntity<>("Survey created successfully", HttpStatus.CREATED);
-
-            } else {
-                // Assessment not found for setName
-                return new ResponseEntity<>("Assessment not found for set name: " + survey.getSetName(), HttpStatus.OK);
+            } catch (Exception e) {
+                // Handle unexpected exceptions
+                return new ResponseEntity<>("Set name or Question Id not found", HttpStatus.OK);
             }
 
-        } catch (Exception e) {
-            // Handle unexpected exceptions
-            return new ResponseEntity<>("Error retrieving assessment: " + e.getMessage(), HttpStatus.OK);
-        }
-    }
 
     }
-
-
-
-
+}
 
 
 
