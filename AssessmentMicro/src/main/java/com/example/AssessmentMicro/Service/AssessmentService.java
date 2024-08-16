@@ -40,7 +40,12 @@ public class AssessmentService {
 
     // Method to get an assessment by its set ID
     public Optional<AssessmentDTO> getAssessmentBySetId(Long setId) {
-        return assessmentRepository.findById(setId).map(this::convertToDTO);
+        Optional<AssessmentDTO> assessment= assessmentRepository.findById(setId).map(this::convertToDTO);
+        if(assessment.isPresent()) {
+            return assessment;
+        }else{
+            throw new NoSuchElementException("Assessment not found with set ID: " + setId);
+        }
     }
 
     public List<String> getQuestionNamesBySetName(String setName) {
@@ -153,7 +158,6 @@ public class AssessmentService {
         Assessment assessment = new Assessment();
         assessment.setSetName(assessmentDTO.getSetName());
         assessment.setDomain(assessmentDTO.getDomain());
-
         List<Question> questions = assessmentDTO.getQuestions().stream()
                 .map(this::convertToEntity)
                 .collect(Collectors.toList());
